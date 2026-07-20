@@ -1,0 +1,174 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg-color: #0B0B0F;
+  --surface-color: rgba(25, 25, 35, 0.6);
+  --surface-highlight: rgba(255, 255, 255, 0.05);
+  --text-color: #F8F8FF;
+  --text-muted: #A0A0B0;
+  --primary-color: #a78bfa;
+  --primary-hover: #8b5cf6;
+  --secondary-color: #ec4899;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --error-color: #FF4A4A;
+  
+  /* Gradients */
+  --gradient-neon: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #3b82f6 100%);
+  --gradient-glow: radial-gradient(circle, rgba(167,139,250,0.4) 0%, transparent 70%);
+  
+  /* Spacing */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 4rem;
+  
+  /* Typography */
+  --font-body: 'Inter', sans-serif;
+  --font-heading: 'Outfit', sans-serif;
+  --border-radius: 12px;
+  
+  /* Glassmorphism */
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-filter: blur(16px);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-color);
+  background-image: 
+    radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.1), transparent 40%),
+    radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.08), transparent 40%);
+  background-attachment: fixed;
+  color: var(--text-color);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  margin-bottom: var(--spacing-md);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-color);
+}
+
+h1 {
+  font-size: 3rem;
+  font-weight: 900;
+}
+
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
+button {
+  cursor: pointer;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.glass-panel {
+  background: var(--surface-color);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--border-radius);
+}
+
+/* Base Button */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--gradient-neon);
+  color: #fff;
+  border: none;
+  border-radius: var(--border-radius);
+  font-weight: 700;
+  transition: opacity 0.2s, transform 0.1s;
+  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+}
+.btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Form Styles */
+.form-group {
+  margin-bottom: var(--spacing-md);
+}
+.form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-muted);
+}
+.form-control {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  color: var(--text-color);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: all 0.3s;
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+.form-error {
+  color: var(--error-color);
+  font-size: 0.875rem;
+  margin-top: var(--spacing-sm);
+}
+
+/* Form Card */
+.form-card {
+  background: var(--surface-color);
+  backdrop-filter: var(--glass-filter);
+  -webkit-backdrop-filter: var(--glass-filter);
+  border: var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  padding: var(--spacing-xl);
+  border-radius: var(--border-radius);
+  max-width: 450px;
+  margin: var(--spacing-xl) auto;
+}
+.form-card h2 {
+  margin-bottom: var(--spacing-lg);
+  text-align: center;
+  font-size: 2rem;
+}
+
