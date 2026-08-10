@@ -290,6 +290,7 @@ frontend/
 | Order placed | Email | Order confirmation |
 | Order status changed | Email | Shipping/delivery updates |
 | Low stock (admin) | Email/dashboard alert | Restock reminder |
+| Account registered | Email | Welcome/confirmation email |
 
 ---
 

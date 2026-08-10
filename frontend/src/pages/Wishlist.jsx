@@ -2,12 +2,15 @@ import React, { useEffect, useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import apiClient from '../api/client';
 import { CartContext } from '../context/CartContext';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function Wishlist() {
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addItem } = useContext(CartContext);
   const navigate = useNavigate();
+
+  usePageTitle('My Wishlist');
 
   const fetchWishlist = async () => {
     try {
@@ -64,8 +67,8 @@ export default function Wishlist() {
             const product = item.product;
             if (!product) return null;
             return (
-              <div key={item.id} style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-md)', overflow: 'hidden', boxShadow: 'var(--shadow-sm)', display: 'flex', flexDirection: 'column' }}>
-                <Link to={`/products/${product.id}`} style={{ display: 'block', height: '200px', backgroundColor: '#e5e7eb', flexShrink: 0 }}>
+              <div key={item.id} style={{ backgroundColor: 'var(--surface-color)', borderRadius: '16px', overflow: 'hidden', boxShadow: 'var(--card-shadow)', display: 'flex', flexDirection: 'column' }}>
+                <Link to={`/products/${product.id}`} style={{ display: 'block', height: '200px', backgroundColor: 'var(--placeholder-bg)', flexShrink: 0 }}>
                   {product.images && product.images.length > 0 ? (
                     <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (

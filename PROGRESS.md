@@ -296,3 +296,155 @@ Both servers were run simultaneously: Django (`venv\Scripts\python manage.py run
 
 ### CORS Confirmation
 All cross-origin requests (`localhost:5173` → `localhost:8000`) showed correct CORS preflight flow: OPTIONS → 200, then the actual request succeeds. `CORS_ALLOW_ALL_ORIGINS = True` in `settings.py` backed by `corsheaders.middleware.CorsMiddleware`.
+
+---
+
+## Step 12: Welcome Email on Registration
+
+### What was built
+
+- **`SKILLS.md`** — added `| Account registered | Email | Welcome/confirmation email |` to the Notifications table in Section 3.
+- **`users/signals.py`** — new `post_save` signal receiver on `User`. Fires only when `created=True` (i.e., on INSERT, not UPDATE). Sends a plain-text welcome email via `send_mail()` with `fail_silently=True`, using the same console email backend already configured for local dev. Same pattern as the order-status signal in `orders/signals.py`.
+- **`users/apps.py`** — added `ready()` method that imports `users.signals` to register the receiver when the app loads.
+- **`users/tests.py`** — 6 tests in two classes:
+  - `WelcomeEmailSignalTest` — direct signal tests (bypasses API):
+    - `test_welcome_email_sent_on_user_creation` — email sent exactly once on `create_user()`
+    - `test_no_email_sent_on_user_update` — updating an existing user fires no email
+    - `test_welcome_email_not_sent_twice` — two separate users → two separate emails
+  - `WelcomeEmailRegistrationAPITest` — end-to-end through `POST /api/auth/register`:
+    - `test_welcome_email_sent_on_successful_registration` — valid payload → 201 + 1 email
+    - `test_no_email_sent_on_failed_registration_missing_password` — missing password → 400 + 0 emails
+    - `test_no_email_sent_on_failed_registration_duplicate_email` — duplicate email → 400 + 0 emails
+
+### Test output (verbosity=2)
+
+```
+Found 6 test(s).
+...migrations applied...
+System check identified no issues (0 silenced).
+test_no_email_sent_on_failed_registration_duplicate_email
+(users.tests.WelcomeEmailRegistrationAPITest) ... ok
+test_no_email_sent_on_failed_registration_missing_password
+(users.tests.WelcomeEmailRegistrationAPITest) ... ok
+test_welcome_email_sent_on_successful_registration
+(users.tests.WelcomeEmailRegistrationAPITest) ... ok
+test_no_email_sent_on_user_update
+(users.tests.WelcomeEmailSignalTest) ... ok
+test_welcome_email_not_sent_twice
+(users.tests.WelcomeEmailSignalTest) ... ok
+test_welcome_email_sent_on_user_creation
+(users.tests.WelcomeEmailSignalTest) ... ok
+----------------------------------------------------------------------
+Ran 6 tests in 4.023s
+OK
+```
+
+**Result: 6/6 passing.**
+
+---
+
+## Step 14: Visual Design Refresh
+
+### What was built
+
+- **`index.css`** — Overhauled the design tokens to match a clean, bright, high-contrast aesthetic inspired by modern sticker brands (like Sticker Mule).
+  - **Colors**: Changed from dark mode cyberpunk to a light theme. Primary color is a bold Vivid Orange (`#FF5E00`), accent color is a Vibrant Blue (`#0066FF`), and neutral background is off-white (`#F8F9FA`).
+  - **Typography**: Replaced `Outfit` with `Fredoka` for a slightly more playful, bold heading font, while keeping `Inter` for clean body text.
+  - **Elements**: Removed all glassmorphism filters, heavy neon gradients, and drop shadows, replacing them with clean borders (`#E9ECEF`) and subtle, sharp shadows (`var(--card-shadow)`).
+- **`Home.jsx`** — Rewrote the layout to strip out inline dark mode styling, animated radial gradient blobs, and 3D effects. Used the new clean utility classes.
+- **`ProductCard.jsx`** — Removed the complex `framer-motion` 3D tilt and holographic glare. Replaced it with a simple, solid white card that uses a subtle hover lift (`y: -8`) and scale effect.
+- **`Layout.module.css` & `Layout.jsx`** — Updated the nav bar to be solid white (removed backdrop blur) with a two-tone brand logo (`Sticker<span>Shop</span>`).
+
+---
+
+## Step 16: Homepage & Footer Expansion
+
+### PART 1 — Homepage Content Expansion
+
+Added 6 new sections to `Home.jsx` (reusing existing API data, no new backend logic):
+
+1. **Trust Strip** — 4 icons with labels (Fast Shipping, Custom Designs, Secure Checkout, Quality Materials) — static content, placed near the top for immediate credibility.
+2. **Featured Products** — First 4 products from `GET /api/products`, displayed in a responsive grid with `SectionHeader` showing subtitle and "View all →" link.
+3. **How It Works** — 4-step static strip (Browse → Pick Your Style → Checkout → Enjoy) with step numbers, emoji icons, and descriptions. White background with border separators.
+4. **Category Showcase** — Visual cards for each top-level category from `GET /api/categories` with contextual emoji icons (✨ for holographic, 🤖 for cyberpunk, etc.), linking to filtered catalog.
+5. **New Arrivals** — Same product data sorted by newest (reversed), displayed separately from Featured Products to avoid repetition.
+6. **Testimonials** — 3 quote cards with star ratings, customer names, and product references. Uses static data since there's no global reviews endpoint.
+
+### PART 2 — Footer Expansion
+
+Replaced the simple one-line copyright footer in `Layout.jsx` / `Layout.module.css` with a full 4-column footer:
+
+1. **Brand Column** — StickerShop logo (two-tone) + short brand description.
+2. **Quick Links** — Home, Products, Cart, Wishlist, Login, Register — all using existing routes.
+3. **Contact** — `contact@stickershop.com` (mailto: link), phone placeholder, address placeholder.
+4. **Social Media** — Instagram, Facebook, Twitter/X, TikTok — inline SVG icons with hover effects (gray → orange), linking to placeholder URLs.
+5. **Copyright** — "© 2026 StickerShop. All rights reserved." in a border-separated bottom bar.
+
+Footer uses a dark `#1A1A1A` background with responsive grid (4-col → 2-col → 1-col on mobile via `@media` queries).
+
+---
+
+## Step 18: UX Polish Batch
+
+Implemented a series of frontend-only UX improvements to enhance the feel of the shop:
+
+1. **Breadcrumbs** — Added to `ProductDetail.jsx` and `Catalog.jsx` (e.g., Home > Category > Product Name).
+2. **"New" Badge** — Added to `ProductCard.jsx` for products created within the last 14 days.
+3. **Related Products** — Fetches products from the same category on `ProductDetail.jsx` and displays them, excluding the current product.
+4. **Recently Viewed** — Tracks the last 5 viewed product IDs in `localStorage` and displays them on `ProductDetail.jsx`.
+5. **Back-to-top Button** — Created a floating `BackToTop` component in `Layout.jsx` that smooth-scrolls to top when clicked.
+6. **Hover Zoom** — Added subtle `framer-motion` scale-up (`1.05`) effect to product images.
+7. **Free Shipping Progress Bar** — Added a visual progress bar to `Cart.jsx` based on a $50 threshold.
+8. **Quantity Stepper** — Replaced plain number inputs with custom `[ - ] [ 1 ] [ + ]` stepper controls in `Cart.jsx` and `ProductDetail.jsx`.
+9. **Dynamic Page Titles** — Created `usePageTitle` custom hook and implemented it across all main pages (Home, Catalog, Cart, Login, Register, Checkout, Order Detail, etc.).
+10. **Copy-to-Clipboard** — Added a clipboard icon button next to the discount code input in `Checkout.jsx` that temporarily shows "Copied!".
+11. **Live Search Suggestions** — Implemented a `SearchBar.jsx` component in the navigation that fetches and displays debounced dropdown suggestions as the user types.
+12. **Color-Coded Status Badges** — Implemented a reusable `OrderStatusBadge` for `OrderHistory.jsx` and `OrderDetail.jsx` (Pending=Yellow, Paid=Blue, Delivered=Green).
+13. **Confetti Animation** — Installed `canvas-confetti` and added a burst animation when landing on `OrderConfirmation.jsx` after a successful purchase.
+
+---
+
+## Step 19: Rebrand to Stiko
+
+Updated the site branding to a simpler, more modern identity:
+1. **Name Update**: Changed all instances of "StickerShop" to "Stiko" across the codebase (nav bar, footer, document titles, and welcome email).
+2. **Logo Wordmark & Icon**: Installed `lucide-react` and implemented the clean `Sticker` icon alongside the "Stiko" wordmark, replacing the rough custom SVG.
+3. **Favicon**: Exported the `Sticker` icon as a clean, colored `favicon.svg` and updated `index.html` to load it.
+
+---
+
+## Step 20: Fix Checkout Fallback Bug
+
+Resolved an issue where completing a Stripe checkout without the webhook running would result in a "Payment succeeded, but order creation failed" error.
+- **Root Cause**: The frontend fallback `POST /api/orders/` in `Checkout.jsx` was incorrectly sending `payment_ref` instead of the expected `payment_intent_id`. This resulted in a 400 Bad Request error from the backend.
+- **Fix**: Updated `Checkout.jsx` to pass `payment_intent_id: intentId` to the backend when finalizing the order.
+- **Testing**: Added `FallbackCheckoutTestCase` to `orders/tests.py`. The tests confirmed that the fallback creates the order properly with the fix and strictly fails with the old `payment_ref` field. Furthermore, the test suite verifies the original webhook handler (`StripeWebhookView`) was never affected because it internally pulls the `payment_intent['id']` straight from the Stripe event. Checkout works reliably whether or not `stripe listen` is running.
+
+---
+
+## Step 21: Fix Order Detail "Unknown Product" Bug
+
+Resolved a UI issue on the Order Detail page where purchased items displayed "Unknown Product" with missing images.
+- **Root Cause**: A mismatch between the frontend paths and backend serializer. The `OrderItemSerializer` exposes nested product data via `variant_details.product_details`, but `OrderDetail.jsx` was looking for it at `variant.product`.
+- **Fix**: Updated `OrderDetail.jsx` to correctly map `item.variant_details?.product_details?.name`, `id`, and `images`.
+- **Testing**: Added `OrderDetailDataTestCase` in `orders/tests.py` confirming the `GET /api/orders/:id` payload successfully exposes the expected nested variant/product structure.
+
+---
+
+## Step 23: Dark Mode Toggle
+
+Implemented a comprehensive dark mode across the entire application.
+- **Theme Variables**: Added a `.dark` theme block to `index.css` overriding backgrounds, text, and borders while preserving the brand's vivid orange and vibrant blue colors.
+- **Global State**: Introduced `ThemeContext` to track the user's preference and store it in `localStorage`, defaulting to system preference via `window.matchMedia`.
+- **Nav Toggle**: Added a Sun/Moon toggle to the main header using `lucide-react`.
+- **Audit & Sweep**: Scanned all recent additions (homepage layout, cart, checkout, order history) and swapped inline white/gray colors to semantic CSS variables (`var(--surface-color)`, `var(--placeholder-bg)`). Upgraded the `OrderHistory` status badges to use translucent CSS `rgba()` logic that reads perfectly in both modes.
+
+---
+
+## Step 24: 3D Hero Visual
+
+Added a dynamic, interactive 3D visual layer to the homepage hero section.
+- Fetched up to 4 real product images from the existing `/api/products` call.
+- Used `framer-motion` to scatter these sticker images around the hero headline with random 3D rotations, varied sizes, and drop shadows to simulate depth.
+- Added a continuous gentle floating animation (`y: [0, -15, 0]`) with unique delays so they drift organically.
+- Implemented a parallax mouse-tilt effect: tracking cursor position (`onMouseMove`) over the hero section, the entire sticker cluster subtly shifts in the opposite direction of the cursor.

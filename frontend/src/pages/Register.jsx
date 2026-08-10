@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import apiClient from '../api/client';
 import { AuthContext } from '../context/AuthContext';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function Register() {
   const [firstName, setFirstName] = useState('');
@@ -13,6 +14,8 @@ export default function Register() {
   
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  usePageTitle('Register');
 
   const handleSubmit = async (e) => {
     e.preventDefault();

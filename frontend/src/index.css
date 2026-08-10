@@ -1,36 +1,59 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  --bg-color: #0B0B0F;
-  --surface-color: rgba(25, 25, 35, 0.6);
-  --surface-highlight: rgba(255, 255, 255, 0.05);
-  --text-color: #F8F8FF;
-  --text-muted: #A0A0B0;
-  --primary-color: #a78bfa;
-  --primary-hover: #8b5cf6;
-  --secondary-color: #ec4899;
-  --border-color: rgba(255, 255, 255, 0.08);
-  --error-color: #FF4A4A;
+  /* Sticker Mule inspired: Bold, clean, high contrast */
+  --bg-color: #F8F9FA; /* Off-white background */
+  --surface-color: #FFFFFF; /* Pure white cards */
+  --text-color: #1A1A1A; /* Near black text */
+  --text-muted: #6C757D; /* Gray text */
   
-  /* Gradients */
-  --gradient-neon: linear-gradient(135deg, #a78bfa 0%, #ec4899 50%, #3b82f6 100%);
-  --gradient-glow: radial-gradient(circle, rgba(167,139,250,0.4) 0%, transparent 70%);
+  /* Bold primary color (Vivid Orange) */
+  --primary-color: #FF5E00; 
+  --primary-hover: #E65500;
   
-  /* Spacing */
-  --spacing-sm: 0.5rem;
-  --spacing-md: 1rem;
-  --spacing-lg: 2rem;
-  --spacing-xl: 4rem;
+  /* Accent/CTA color (Vibrant Blue) */
+  --accent-color: #0066FF;
+  --accent-hover: #005ce6;
   
-  /* Typography */
+  --border-color: #E9ECEF;
+  --error-color: #DC3545;
+  
+  /* Spacing - more generous */
+  --spacing-sm: 0.75rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 3rem;
+  --spacing-xl: 5rem;
+  
+  /* Typography - Playful heading, clean body */
   --font-body: 'Inter', sans-serif;
-  --font-heading: 'Outfit', sans-serif;
-  --border-radius: 12px;
+  --font-heading: 'Fredoka', sans-serif;
+  --border-radius: 16px; /* Slightly rounder */
   
-  /* Glassmorphism */
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-filter: blur(16px);
+  /* Clean shadows instead of glassmorphism */
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --card-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.1);
+  
+  /* Shared status colors */
+  --success-color: #10B981;
+  --star-color: #FBBF24;
+  
+  /* Placeholder/Empty block background */
+  --placeholder-bg: #F8F9FA;
+}
+
+html.dark {
+  --bg-color: #121212;
+  --surface-color: #1E1E1E;
+  --text-color: #F3F4F6;
+  --text-muted: #9CA3AF;
+  
+  --border-color: #374151;
+  --error-color: #F87171;
+  
+  --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+  
+  --placeholder-bg: #2A2A2A;
 }
 
 * {
@@ -42,10 +65,6 @@
 body {
   font-family: var(--font-body);
   background-color: var(--bg-color);
-  background-image: 
-    radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.1), transparent 40%),
-    radial-gradient(ellipse at 80% 80%, rgba(236, 72, 153, 0.08), transparent 40%);
-  background-attachment: fixed;
   color: var(--text-color);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
@@ -56,46 +75,49 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   margin-bottom: var(--spacing-md);
   font-weight: 700;
-  letter-spacing: -0.02em;
   color: var(--text-color);
 }
 
 h1 {
-  font-size: 3rem;
-  font-weight: 900;
+  font-size: 3.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 a {
-  color: var(--primary-color);
+  color: var(--accent-color);
   text-decoration: none;
   transition: color 0.2s ease;
 }
 
 a:hover {
-  color: var(--primary-hover);
+  color: var(--accent-hover);
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 var(--spacing-lg);
+  padding: 0 var(--spacing-md); /* Use md for container padding, lg was too much on mobile */
 }
 
 button {
   cursor: pointer;
   font-family: var(--font-heading);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
-.glass-panel {
+/* Replaced glass-panel with clean-card */
+.glass-panel, .clean-card {
   background: var(--surface-color);
-  backdrop-filter: var(--glass-filter);
-  -webkit-backdrop-filter: var(--glass-filter);
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
   border-radius: var(--border-radius);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.glass-panel:hover, .clean-card:hover {
+  box-shadow: var(--card-shadow-hover);
 }
 
 /* Base Button */
@@ -103,18 +125,19 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: var(--gradient-neon);
-  color: #fff;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--accent-color);
+  color: #FFFFFF;
   border: none;
-  border-radius: var(--border-radius);
-  font-weight: 700;
-  transition: opacity 0.2s, transform 0.1s;
-  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+  border-radius: 8px; /* Sharper buttons look more professional */
+  font-size: 1.1rem;
+  font-weight: 600;
+  transition: background-color 0.2s, transform 0.1s;
 }
 .btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  background-color: var(--accent-hover);
+  transform: translateY(-2px);
+  color: #FFFFFF;
 }
 .btn:disabled {
   opacity: 0.5;
@@ -128,47 +151,61 @@ button {
 }
 .form-group label {
   display: block;
-  font-weight: 500;
-  margin-bottom: var(--spacing-sm);
-  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
 }
 .form-control {
   width: 100%;
-  padding: var(--spacing-sm) var(--spacing-md);
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius);
+  padding: 0.75rem 1rem;
+  background: var(--surface-color);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
   color: var(--text-color);
   font-family: inherit;
   font-size: 1rem;
-  transition: all 0.3s;
+  transition: all 0.2s;
 }
 .form-control:focus {
   outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 .form-error {
   color: var(--error-color);
   font-size: 0.875rem;
-  margin-top: var(--spacing-sm);
+  margin-top: 0.5rem;
+  font-weight: 500;
 }
 
 /* Form Card */
 .form-card {
   background: var(--surface-color);
-  backdrop-filter: var(--glass-filter);
-  -webkit-backdrop-filter: var(--glass-filter);
-  border: var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  padding: var(--spacing-xl);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
+  padding: var(--spacing-lg);
   border-radius: var(--border-radius);
-  max-width: 450px;
+  max-width: 480px;
   margin: var(--spacing-xl) auto;
 }
 .form-card h2 {
   margin-bottom: var(--spacing-lg);
   text-align: center;
-  font-size: 2rem;
+  font-size: 2.2rem;
 }
+
+/* Status Badges */
+.badge-pending { background-color: rgba(245, 158, 11, 0.15); color: #d97706; }
+.badge-paid { background-color: rgba(59, 130, 246, 0.15); color: #2563eb; }
+.badge-shipped { background-color: rgba(99, 102, 241, 0.15); color: #4f46e5; }
+.badge-delivered { background-color: rgba(16, 185, 129, 0.15); color: #059669; }
+.badge-cancelled { background-color: rgba(239, 68, 68, 0.15); color: #dc2626; }
+.badge-default { background-color: rgba(107, 114, 128, 0.15); color: #4b5563; }
+
+html.dark .badge-pending { color: #fcd34d; }
+html.dark .badge-paid { color: #93c5fd; }
+html.dark .badge-shipped { color: #a5b4fc; }
+html.dark .badge-delivered { color: #6ee7b7; }
+html.dark .badge-cancelled { color: #fca5a5; }
+html.dark .badge-default { color: #d1d5db; }
 

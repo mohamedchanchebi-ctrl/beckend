@@ -1,19 +1,25 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import apiClient from '../api/client';
 import { AuthContext } from '../context/AuthContext';
 import { CartContext } from '../context/CartContext';
+import usePageTitle from '../hooks/usePageTitle';
+import ProductCard from '../components/ProductCard';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isAuthenticated } = useContext(AuthContext);
   const { addItem } = useContext(CartContext);
-  const [addingToCart, setAddingToCart] = useState(false);
-
+  
   const [product, setProduct] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [quantity, setQuantity] = useState(1);
 
   // Variant selections
   const [selectedSize, setSelectedSize] = useState('');
@@ -21,35 +27,68 @@ export default function ProductDetail() {
   const [selectedFinish, setSelectedFinish] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
 
+  usePageTitle(product?.name || 'Product Details');
+
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
       try {
         const [prodRes, revRes] = await Promise.all([
           apiClient.get(`/products/${id}/`),
           apiClient.get(`/products/${id}/reviews/`)
         ]);
-        setProduct(prodRes.data);
+        const prodData = prodRes.data;
+        setProduct(prodData);
         setReviews(revRes.data.results || revRes.data || []);
+        
+        // Track recently viewed in localStorage
+        const recent = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+        const newRecent = [prodData.id, ...recent.filter(item => item !== prodData.id)].slice(0, 5);
+        localStorage.setItem('recentlyViewed', JSON.stringify(newRecent));
+        
+        // Fetch related products (same category)
+        if (prodData.category) {
+          const relatedRes = await apiClient.get(`/products/?category=${prodData.category}`);
+          const related = (relatedRes.data.results || relatedRes.data || [])
+            .filter(p => p.id !== prodData.id)
+            .slice(0, 4);
+          setRelatedProducts(related);
+        }
+
+        // Fetch recently viewed products data
+        if (recent.length > 0) {
+          const recentIds = recent.filter(recentId => recentId !== prodData.id).slice(0, 4);
+          const recentPromises = recentIds.map(rid => apiClient.get(`/products/${rid}/`).catch(() => null));
+          const recentData = await Promise.all(recentPromises);
+          setRecentlyViewed(recentData.map(res => res?.data).filter(Boolean));
+        }
+
       } catch (err) {
         console.error('Failed to load product detail', err);
       } finally {
         setLoading(false);
       }
     };
+    
+    // Reset state when id changes
+    setSelectedSize('');
+    setSelectedMaterial('');
+    setSelectedFinish('');
+    setSelectedColor('');
+    setQuantity(1);
+    
     fetchData();
   }, [id]);
 
-  if (loading) return <div>Loading...</div>;
-  if (!product) return <div>Product not found.</div>;
+  if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading...</div>;
+  if (!product) return <div style={{ padding: '4rem', textAlign: 'center' }}>Product not found.</div>;
 
-  // Extract unique options from variants
   const variants = product.variants || [];
   const sizes = [...new Set(variants.map(v => v.size).filter(Boolean))];
   const materials = [...new Set(variants.map(v => v.material).filter(Boolean))];
   const finishes = [...new Set(variants.map(v => v.finish).filter(Boolean))];
   const colors = [...new Set(variants.map(v => v.color).filter(Boolean))];
 
-  // Find currently selected variant based on selections
   const selectedVariant = variants.find(v => 
     (!selectedSize || v.size === selectedSize) &&
     (!selectedMaterial || v.material === selectedMaterial) &&
@@ -74,7 +113,7 @@ export default function ProductDetail() {
     
     setAddingToCart(true);
     try {
-      await addItem(selectedVariant.id, 1);
+      await addItem(selectedVariant.id, quantity);
       alert("Item added to cart!");
     } catch (e) {
       alert("Failed to add to cart. It may be out of stock.");
@@ -99,80 +138,107 @@ export default function ProductDetail() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-8)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '4rem' }}>
+      
+      {/* Breadcrumbs */}
+      <nav style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <Link to="/" style={{ color: 'var(--text-muted)' }}>Home</Link>
+        {' > '}
+        <Link to={`/products?category=${product.category}`} style={{ color: 'var(--text-muted)' }}>
+          {product.category_name || 'Category'}
+        </Link>
+        {' > '}
+        <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>{product.name}</span>
+      </nav>
+
       {/* Product Top Section */}
-      <div style={{ display: 'flex', gap: 'var(--spacing-8)', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '4rem', flexWrap: 'wrap' }}>
         
-        {/* Images */}
+        {/* Image */}
         <div style={{ flex: '1 1 400px' }}>
-          <div style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', border: '1px solid var(--color-border)', height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="clean-card" style={{ height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem', backgroundColor: 'var(--placeholder-bg)' }}>
              {product.images && product.images.length > 0 ? (
-                <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <motion.img 
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ duration: 0.3 }}
+                  src={product.images[0]} 
+                  alt={product.name} 
+                  style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.1))' }} 
+                />
               ) : (
-                <span style={{ color: 'var(--color-text-muted)' }}>No Image Available</span>
+                <span style={{ color: 'var(--text-muted)' }}>No Image Available</span>
               )}
           </div>
         </div>
 
         {/* Info & Cart Form */}
-        <div style={{ flex: '1 1 300px' }}>
-          <h1 style={{ marginBottom: 'var(--spacing-2)' }}>{product.name}</h1>
-          <p style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary)', marginBottom: 'var(--spacing-4)' }}>
+        <div style={{ flex: '1 1 400px' }}>
+          <h1 style={{ marginBottom: '0.5rem', fontSize: '2.5rem' }}>{product.name}</h1>
+          <p style={{ fontSize: '2rem', fontWeight: 700, color: 'var(--primary-color)', marginBottom: '1.5rem', fontFamily: 'var(--font-heading)' }}>
             ${parseFloat(finalPrice).toFixed(2)}
           </p>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-6)' }}>{product.description}</p>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '2.5rem', fontSize: '1.1rem', lineHeight: 1.7 }}>{product.description}</p>
 
-          <div style={{ backgroundColor: 'var(--color-bg-card)', padding: 'var(--spacing-4)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)', marginBottom: 'var(--spacing-4)' }}>
+          <div className="clean-card" style={{ padding: '2rem' }}>
             
-            {sizes.length > 0 && (
-              <div className="form-group">
-                <label>Size</label>
-                <select className="form-control" value={selectedSize} onChange={e => setSelectedSize(e.target.value)}>
-                  <option value="">Select Size</option>
-                  {sizes.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
-              </div>
-            )}
-            
-            {materials.length > 0 && (
-              <div className="form-group">
-                <label>Material</label>
-                <select className="form-control" value={selectedMaterial} onChange={e => setSelectedMaterial(e.target.value)}>
-                  <option value="">Select Material</option>
-                  {materials.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </div>
-            )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              {sizes.length > 0 && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Size</label>
+                  <select className="form-control" value={selectedSize} onChange={e => setSelectedSize(e.target.value)}>
+                    <option value="">Select Size</option>
+                    {sizes.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+              )}
+              {materials.length > 0 && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Material</label>
+                  <select className="form-control" value={selectedMaterial} onChange={e => setSelectedMaterial(e.target.value)}>
+                    <option value="">Select Material</option>
+                    {materials.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                </div>
+              )}
+              {finishes.length > 0 && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Finish</label>
+                  <select className="form-control" value={selectedFinish} onChange={e => setSelectedFinish(e.target.value)}>
+                    <option value="">Select Finish</option>
+                    {finishes.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
+                </div>
+              )}
+              {colors.length > 0 && (
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label>Color</label>
+                  <select className="form-control" value={selectedColor} onChange={e => setSelectedColor(e.target.value)}>
+                    <option value="">Select Color</option>
+                    {colors.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+              )}
+            </div>
 
-            {finishes.length > 0 && (
-              <div className="form-group">
-                <label>Finish</label>
-                <select className="form-control" value={selectedFinish} onChange={e => setSelectedFinish(e.target.value)}>
-                  <option value="">Select Finish</option>
-                  {finishes.map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
+            {/* Quantity Stepper */}
+            <div className="form-group" style={{ marginBottom: '2rem' }}>
+              <label>Quantity</label>
+              <div style={{ display: 'inline-flex', alignItems: 'center', border: '2px solid var(--border-color)', borderRadius: '8px', overflow: 'hidden' }}>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} style={{ padding: '0.5rem 1rem', background: 'var(--placeholder-bg)', border: 'none', borderRight: '2px solid var(--border-color)', fontSize: '1.2rem', fontWeight: 600 }}>-</button>
+                <div style={{ padding: '0.5rem 1.5rem', fontWeight: 600, fontSize: '1.1rem' }}>{quantity}</div>
+                <button onClick={() => setQuantity(quantity + 1)} style={{ padding: '0.5rem 1rem', background: 'var(--placeholder-bg)', border: 'none', borderLeft: '2px solid var(--border-color)', fontSize: '1.2rem', fontWeight: 600 }}>+</button>
               </div>
-            )}
+            </div>
 
-            {colors.length > 0 && (
-              <div className="form-group">
-                <label>Color</label>
-                <select className="form-control" value={selectedColor} onChange={e => setSelectedColor(e.target.value)}>
-                  <option value="">Select Color</option>
-                  {colors.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-            )}
-
-            <button className="btn" style={{ width: '100%', marginBottom: 'var(--spacing-2)' }} onClick={handleAddToCart} disabled={addingToCart}>
+            <button className="btn" style={{ width: '100%', marginBottom: '1rem', padding: '1rem' }} onClick={handleAddToCart} disabled={addingToCart || (selectedVariant && selectedVariant.stock_qty <= 0)}>
               {addingToCart ? 'Adding...' : 'Add to Cart'}
             </button>
-            <button className="btn" style={{ width: '100%', backgroundColor: 'transparent', color: 'var(--color-primary)', border: '1px solid var(--color-primary)' }} onClick={handleAddToWishlist}>
-              Add to Wishlist
+            <button className="btn" style={{ width: '100%', backgroundColor: 'transparent', color: 'var(--text-color)', border: '2px solid var(--border-color)', padding: '1rem' }} onClick={handleAddToWishlist}>
+              ♡ Add to Wishlist
             </button>
 
             {selectedVariant && (
-              <div style={{ marginTop: 'var(--spacing-2)', fontSize: '0.875rem', color: selectedVariant.stock_qty > 0 ? 'var(--color-success)' : 'var(--color-error)' }}>
+              <div style={{ marginTop: '1.5rem', textAlign: 'center', fontWeight: 600, color: selectedVariant.stock_qty > 0 ? 'var(--success-color)' : 'var(--error-color)' }}>
                 {selectedVariant.stock_qty > 0 ? `In Stock (${selectedVariant.stock_qty})` : 'Out of Stock'}
               </div>
             )}
@@ -180,25 +246,49 @@ export default function ProductDetail() {
         </div>
       </div>
 
+      {/* Related Products */}
+      {relatedProducts.length > 0 && (
+        <section style={{ borderTop: '2px solid var(--border-color)', paddingTop: '3rem' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>You might also like</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '2rem' }}>
+            {relatedProducts.map(prod => <ProductCard key={prod.id} prod={prod} />)}
+          </div>
+        </section>
+      )}
+
+      {/* Recently Viewed */}
+      {recentlyViewed.length > 0 && (
+        <section style={{ borderTop: '2px solid var(--border-color)', paddingTop: '3rem' }}>
+          <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>Recently Viewed</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '2rem' }}>
+            {recentlyViewed.map(prod => <ProductCard key={prod.id} prod={prod} />)}
+          </div>
+        </section>
+      )}
+
       {/* Reviews Section */}
-      <div style={{ backgroundColor: 'var(--color-bg-card)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-lg)' }}>
-        <h2 style={{ marginBottom: 'var(--spacing-4)' }}>Customer Reviews</h2>
+      <section style={{ borderTop: '2px solid var(--border-color)', paddingTop: '3rem' }}>
+        <h2 style={{ fontSize: '2rem', marginBottom: '2rem' }}>Customer Reviews</h2>
         {reviews.length === 0 ? (
-          <p style={{ color: 'var(--color-text-muted)' }}>No reviews yet.</p>
+          <div className="clean-card" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+            No reviews yet for this product. Be the first to review after purchasing!
+          </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+          <div style={{ display: 'grid', gap: '1.5rem' }}>
             {reviews.map(rev => (
-              <div key={rev.id} style={{ borderBottom: '1px solid var(--color-border)', paddingBottom: 'var(--spacing-4)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--spacing-2)' }}>
-                  <strong>User {rev.user_id}</strong>
-                  <span style={{ color: '#fbbf24' }}>{'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}</span>
+              <div key={rev.id} className="clean-card" style={{ padding: '2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center' }}>
+                  <strong style={{ fontSize: '1.1rem' }}>User {rev.user_id}</strong>
+                  <span style={{ color: 'var(--star-color)', fontSize: '1.2rem', letterSpacing: '2px' }}>
+                    {'★'.repeat(rev.rating)}{'☆'.repeat(5 - rev.rating)}
+                  </span>
                 </div>
-                <p>{rev.comment}</p>
+                <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, margin: 0 }}>{rev.comment}</p>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -1,10 +1,39 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import apiClient from '../api/client';
+import usePageTitle from '../hooks/usePageTitle';
+
+export const OrderStatusBadge = ({ status }) => {
+  let badgeClass = 'badge-default';
+  
+  switch(status?.toLowerCase()) {
+    case 'pending': badgeClass = 'badge-pending'; break;
+    case 'paid': badgeClass = 'badge-paid'; break;
+    case 'shipped': badgeClass = 'badge-shipped'; break;
+    case 'delivered': badgeClass = 'badge-delivered'; break;
+    case 'cancelled': badgeClass = 'badge-cancelled'; break;
+  }
+
+  return (
+    <span className={badgeClass} style={{ 
+      display: 'inline-block', 
+      padding: '0.3rem 0.75rem', 
+      borderRadius: '20px',
+      fontSize: '0.75rem',
+      fontWeight: 700,
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em'
+    }}>
+      {status}
+    </span>
+  );
+};
 
 export default function OrderHistory() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  usePageTitle('Order History');
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -20,42 +49,31 @@ export default function OrderHistory() {
     fetchOrders();
   }, []);
 
-  if (loading) return <div>Loading order history...</div>;
+  if (loading) return <div style={{ padding: '4rem', textAlign: 'center' }}>Loading order history...</div>;
 
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-6)' }}>
-        <h1>Order History</h1>
-        <Link to="/account" style={{ color: 'var(--color-text-muted)', textDecoration: 'underline' }}>Back to Account</Link>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <h1 style={{ margin: 0 }}>Order History</h1>
+        <Link to="/account" style={{ color: 'var(--text-muted)', textDecoration: 'underline', fontWeight: 500 }}>Back to Account</Link>
       </div>
 
       {orders.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: 'var(--spacing-8) 0', backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)' }}>
-          <p style={{ color: 'var(--color-text-muted)', marginBottom: 'var(--spacing-4)' }}>You haven't placed any orders yet.</p>
+        <div className="clean-card" style={{ textAlign: 'center', padding: '4rem 2rem' }}>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '1.1rem' }}>You haven't placed any orders yet.</p>
           <Link to="/products" className="btn">Start Shopping</Link>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-4)' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {orders.map(order => (
-            <div key={order.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--color-bg-card)', padding: 'var(--spacing-6)', borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-sm)' }}>
+            <div key={order.id} className="clean-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2rem' }}>
               <div>
-                <h3 style={{ marginBottom: 'var(--spacing-1)' }}>Order #{order.id}</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                <h3 style={{ marginBottom: '0.5rem', fontSize: '1.3rem' }}>Order #{order.id}</h3>
+                <p style={{ fontSize: '0.95rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>
                   Placed on {new Date(order.created_at).toLocaleDateString()}
                 </p>
-                <div style={{ marginTop: 'var(--spacing-2)' }}>
-                   <span style={{ 
-                     display: 'inline-block', 
-                     padding: '0.25rem 0.5rem', 
-                     backgroundColor: order.status === 'delivered' ? '#dcfce7' : '#f3f4f6', 
-                     color: order.status === 'delivered' ? '#166534' : '#374151',
-                     borderRadius: 'var(--radius-sm)',
-                     fontSize: '0.75rem',
-                     fontWeight: 'bold',
-                     textTransform: 'uppercase'
-                   }}>
-                     {order.status}
-                   </span>
+                <div>
+                   <OrderStatusBadge status={order.status} />
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>

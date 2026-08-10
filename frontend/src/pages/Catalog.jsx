@@ -1,14 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import apiClient from '../api/client';
 import ProductCard from '../components/ProductCard';
+import usePageTitle from '../hooks/usePageTitle';
 
 export default function Catalog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  usePageTitle('Catalog');
 
   // Form states matching URL params
   const [search, setSearch] = useState(searchParams.get('search') || '');
@@ -130,7 +133,12 @@ export default function Catalog() {
 
       {/* Product Grid */}
       <div style={{ flex: 1, minWidth: '300px' }}>
-        <h1 style={{ marginBottom: 'var(--spacing-lg)' }}>Catalog</h1>
+        <nav style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          <Link to="/" style={{ color: 'var(--text-muted)' }}>Home</Link>
+          {' > '}
+          <span style={{ color: 'var(--text-color)', fontWeight: 600 }}>Catalog</span>
+        </nav>
+        <h1 style={{ marginBottom: '2rem', fontSize: '2.5rem' }}>Catalog</h1>
         {loading ? (
           <div>Loading products...</div>
         ) : products.length === 0 ? (
